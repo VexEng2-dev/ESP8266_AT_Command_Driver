@@ -43,41 +43,47 @@ static uint8_t _esp8266_convert_msg_cb(void);
 
 
 /* ==============  Interrupt functions  ====================*/
-#ifdef __cplusplus
-    extern "C"{
-#endif 
+
 /// @brief read data in interruption function Into Rx Buffer 
 /// @note  if the received char is "\\n", will automatically copy the Rx buffer to Rx_buffer_shadow
 /// @param 
-void USART3_IRQHandler(void){
-    if (USART_GetITStatus(ESP_USART, USART_IT_RXNE) == SET){
-        if (buffR_length < ESP8266_RX_BUFFER_SIZE){
+void USART3_IRQHandler(void)
+{
+    if (USART_GetITStatus(ESP_USART, USART_IT_RXNE) == SET)
+	{
+        if (buffR_length < ESP8266_RX_BUFFER_SIZE)
+		{
             ESP_Rx_buffer[buffR_length] = (char)USART_ReceiveData(ESP_USART);
+			
             // if the main program is spliting command, not do this 
-            if (!rx_shadow_buffer_protected && ESP_Rx_buffer[buffR_length] == '\n' && buffR_length + buffR_shadow_length < ESP8266_RX_BUFFER_SIZE){
+            if (!rx_shadow_buffer_protected && ESP_Rx_buffer[buffR_length] == '\n' && buffR_length + buffR_shadow_length < ESP8266_RX_BUFFER_SIZE)
+			{
                 strcpy(ESP_Rx_buffer_shadow + buffR_shadow_length, ESP_Rx_buffer);
                 buffR_shadow_length = buffR_shadow_length + strlen(ESP_Rx_buffer);  // length of shadow buffer 
                 memset(ESP_Rx_buffer,0, strlen(ESP_Rx_buffer));   // clear the buffer
                 buffR_length = 0;
-            }else{
+            }
+			else
+			{
                 buffR_length++;
             }
-        }else{
+        }
+		else
+		{
             // in this case:  1. the port never get a valid command or data, throw it out.
             //                2. throughout the port get valid command, RxBuffer_shadow is full
             memset(ESP_Rx_buffer, 0, strlen(ESP_Rx_buffer));
             buffR_length = 0;
         }
+		
         USART_ClearITPendingBit(ESP_USART,USART_IT_RXNE);
     }
 }
-#ifdef __cplusplus
-    }
-#endif
-/* ============ static function definition ======================= */
+
 /// @brief init ESP8266 gpio function
 /// @param 
-static void _esp8266_ioinit(void){
+void _esp8266_ioinit(void)
+{
     RCC_APB2PeriphClockCmd(ESP_GPIO_Periph, ENABLE);
     GPIO_InitTypeDef GPIO_InitStruct;
     GPIO_InitStruct.GPIO_Pin =  ESP_Pin_EN | ESP_Pin_RST | ESP_Pin_GPIO0 | ESP_Pin_GPIO2;
@@ -94,7 +100,8 @@ static void _esp8266_ioinit(void){
 
 /// @brief init USART and interruption (including io)
 /// @param 
-static void _esp8266_uartinit(void){
+static void _esp8266_uartinit(void)
+{
     // TXD and RXD cofiguration
     RCC_APB2PeriphClockCmd(ESP_GPIO_Periph, ENABLE);
     RCC_APB1PeriphClockCmd(ESP_USART_Periph, ENABLE);
@@ -134,7 +141,8 @@ static void _esp8266_uartinit(void){
 /// @brief send data to usart 
 /// @note  uart must be initialized correctly 
 /// @param byte 
-static void _esp8266_senddata(uint16_t byte){
+void _esp8266_senddata(uint16_t byte)
+{
 	USART_SendData(ESP_USART, byte);
     while(USART_GetFlagStatus(ESP_USART, USART_FLAG_TXE) == RESET);
 	// wait for data sent -> if we send before data transfer from TDR to Shift Register
@@ -143,7 +151,8 @@ static void _esp8266_senddata(uint16_t byte){
 /// @brief send string or command (use \r\n for end of AT command)
 /// @param __format 
 /// @param 
-static void _esp8266_sendstring(const char* __format, ...){
+void _esp8266_sendstring(const char* __format, ...)
+{
 	char ch[ESP8266_TX_BUFFER_SIZE];
 	va_list arg;
 	va_start(arg, __format);      // receive the parameter from format 
@@ -157,7 +166,8 @@ static void _esp8266_sendstring(const char* __format, ...){
 /// @brief clear the ESP Rx Buffer and shadow Buffer 
 /// @note  this also reset the Rx buffer index and Rx shadow buffer index
 /// @param 
-static void _esp8266_clearRxBuffer(void){
+static void _esp8266_clearRxBuffer(void)
+{
     memset(ESP_Rx_buffer, 0,strlen(ESP_Rx_buffer));
     memset(ESP_Rx_buffer_shadow, 0, strlen(ESP_Rx_buffer_shadow));
     buffR_length = 0;  // also reset the Receive index
@@ -166,7 +176,8 @@ static void _esp8266_clearRxBuffer(void){
 
 /// @brief clear the ESP_Cmd_List Buffer (this is a dynamic allocate buffer)
 /// @param 
-static void _esp8266_clearCmdList(void){
+static void _esp8266_clearCmdList(void)
+{
     for (int i = 0; i < ESP_Cmd_List.cmd_buffer_length; i++){
         if (ESP_Cmd_List.cmd_buffer[i]!=NULL){
             free(ESP_Cmd_List.cmd_buffer[i]);
@@ -183,12 +194,19 @@ static void _esp8266_clearCmdList(void){
 /// @note  it always clear the ESP_Rx_buffer_shadow, **note the ESP_Cmd_List element should be freed after execute**
 /// @return 0: exit normally (convert string into ESP_CMD_LIST successfully)
 ///         1: command list full (see ESP_CMD_BUFFER_Length)
-static uint8_t _esp8266_convert_msg_cb(void){
-    if (!strlen(ESP_Rx_buffer_shadow)) return 0;
+static uint8_t _esp8266_convert_msg_cb(void)
+{
+    if (!strlen(ESP_Rx_buffer_shadow)) 
+        return 0;
+
     char *pch = strtok(ESP_Rx_buffer_shadow, "\r\n");  /* split the string into response */
-    while(pch!=NULL){
+    
+	while(pch!=NULL)
+	{
         /* add the command into the list to be execute */
-        if (ESP_Cmd_List.cmd_buffer_length == ESP_CMD_BUFFER_Length) return 1; // in this case,  command buffer already full
+        if (ESP_Cmd_List.cmd_buffer_length == ESP_CMD_BUFFER_Length) 
+            return 1; // in this case,  command buffer already full
+            
         // append the data at the end of ESP_Cmd_List:
         uint16_t idx = ESP_Cmd_List.cmd_buffer_length;
         
@@ -196,12 +214,15 @@ static uint8_t _esp8266_convert_msg_cb(void){
             free(ESP_Cmd_List.cmd_buffer[idx]);   
             ESP_Cmd_List.cmd_buffer[idx] = NULL;
         }
-        ESP_Cmd_List.cmd_buffer[idx] = (char*)malloc((strlen(pch) + 1) * sizeof(char)); // the string end with "\0"
-        // not take account if malloc failed
+        
+		ESP_Cmd_List.cmd_buffer[idx] = (char*)malloc((strlen(pch) + 1) * sizeof(char)); // the string end with "\0"
+        
+		// not take account if malloc failed
         strcpy(ESP_Cmd_List.cmd_buffer[idx], pch); // record the command into list
         pch = strtok(NULL,"\r\n");
         ESP_Cmd_List.cmd_buffer_length++;
     }
+	
     // clear the buffer shadow for next message: 
     memset(ESP_Rx_buffer_shadow, 0, strlen(ESP_Rx_buffer_shadow));
     buffR_shadow_length = 0; 
@@ -214,18 +235,26 @@ static uint8_t _esp8266_convert_msg_cb(void){
 /// @return 0: exit no error;
 ///         1: Rx buffer full(this would clear Rx buffer);
 /// @bug    fix the receive method
-static uint8_t _esp8266_receive_msg_cb(void){
-    if (!strlen(ESP_Rx_buffer_shadow)) return 0;   // exit normally (no command receive)
+static uint8_t _esp8266_receive_msg_cb(void)
+{
+    if (!strlen(ESP_Rx_buffer_shadow)) 
+        return 0;   // exit normally (no command receive)
+
     // firsty, it will check if buffer full.
     if (strlen(ESP_Rx_buffer) == ESP8266_RX_BUFFER_SIZE){
         // this can't be full during the whole process, if fully its easy to lose data. 
         _esp8266_clearRxBuffer();
         return 1;  // will  return timeout failure, note buffer will be cleared in the interruption function 
     }
+
     /* splitting command, during splitting: protect shadow buffer*/
     rx_shadow_buffer_protected = 1;
-    if (_esp8266_convert_msg_cb()) return 1;
+
+    if (_esp8266_convert_msg_cb()) 
+        return 1;
+
     rx_shadow_buffer_protected = 0;
+    
     return 0;
 }
 
@@ -234,22 +263,25 @@ static uint8_t _esp8266_receive_msg_cb(void){
 /// @param  
 /// @note   If just power on, delay about 1000 ms before call this init function.
 /// @return ESP_RES_OK: Initialize Successfully
-ESP_Error_t esp8266_Init(void){
+ESP_Error_t esp8266_Init(void)
+{
     _esp8266_ioinit();
     _esp8266_uartinit();
+
     /*   initialize Command buffer  */
     ESP_Cmd_List.cmd_buffer_length = 0;
     for (int i = 0; i< ESP_CMD_BUFFER_Length; i++) {
         ESP_Cmd_List.cmd_buffer[i] = NULL;
     }
+
     // use AT command for test, if receive "OK", the initilization is success
-    if (esp8266_sendcmd("AT\r\n","OK", NULL)!=ESP_RES_OK) return ESP_RES_INIT_ERR;
+    if (esp8266_sendcmd("AT\r\n","OK", NULL)!=ESP_RES_OK) 
+        return ESP_RES_INIT_ERR;
+
     return ESP_RES_OK;
 }
 
-#ifdef __cplusplus
-    extern "C"{
-#endif 
+
 /// @brief send the command, wait for response string 
 /// @param cmd           string with command (must end with "\\r\\n")
 /// @param response      string need to check for response (such as "OK")
@@ -257,25 +289,34 @@ ESP_Error_t esp8266_Init(void){
 ///                      for this function, return 0: execute successfully return 1: execute failed 
 /// @return if return ESP_RES_OK, command executed successfully.
 /// @note   data received during cmd execution will be ignored, and ESP_CMD_LIST will always be cleared after execution
-ESP_Error_t esp8266_sendcmd(const char* cmd,const char* response, uint8_t (*cmd_function)(ESP_MSG_LIST)){
+ESP_Error_t esp8266_sendcmd(const char* cmd,const char* response, uint8_t (*cmd_function)(ESP_MSG_LIST))
+{
     ESP_Error_t result = ESP_RES_CMD_NO_RESPONSE_ERR;
     _esp8266_sendstring(cmd);
 
     esp_timeout_counter = 0;  // reset the counter
-    while (esp_timeout_counter < ESP8266_RESPONSE_TIMEOUT + extra_command_timeout){
+    while (esp_timeout_counter < ESP8266_RESPONSE_TIMEOUT + extra_command_timeout)
+	{
         Delay_ms(1);
         uint8_t res;
         res = _esp8266_receive_msg_cb();        // 1: try receive msg to CMD List 
-        if (res) return ESP_RES_RxBUFFER_FULL;  // detect if the buffer is full (if full, try execute command once);
+
+        if (res) 
+            return ESP_RES_RxBUFFER_FULL;  // detect if the buffer is full (if full, try execute command once);
         
         // compare the ESP_Cmd_List and response string, 
-        for (int i=0; i < ESP_Cmd_List.cmd_buffer_length; i++){
-            if (strcmp(ESP_Cmd_List.cmd_buffer[i], response) == 0) {   // if get the response expected 
+        for (int i=0; i < ESP_Cmd_List.cmd_buffer_length; i++)
+		{
+            if (strcmp(ESP_Cmd_List.cmd_buffer[i], response) == 0) // if get the response expected 
+			{   
                 uint8_t  r1 = 0;
-                if (cmd_function!=NULL) r1 = cmd_function(ESP_Cmd_List);  // r1 = 0 execute successfully, or failed
+                if (cmd_function!=NULL) 
+                    r1 = cmd_function(ESP_Cmd_List);  // r1 = 0 execute successfully, or failed
                 
-                if (!r1) result = ESP_RES_OK; 
-                else result = ESP_RES_CMD_EXEC_FAIL;
+                if (!r1) 
+                    result = ESP_RES_OK; 
+                else 
+                    result = ESP_RES_CMD_EXEC_FAIL;
 
                 _esp8266_clearCmdList();  // after execution, clear the command list 
                 return result; 
@@ -291,16 +332,14 @@ ESP_Error_t esp8266_sendcmd(const char* cmd,const char* response, uint8_t (*cmd_
         _esp8266_clearRxBuffer();
         result = ESP_RES_CMD_NO_RESPONSE_ERR;
     }
+	
     return result;
 }
 
-#ifdef __cplusplus
-    }
-#endif
-
 /// this is the function to be called in the main loop, but in a cmd send function
 ///  it will wait message and do the logic. it will be added in the next version.
-ESP_Error_t esp8266_waitmsg(void){
+ESP_Error_t esp8266_waitmsg(void)
+{
     /* add the message  handeler here*/
     return ESP_RES_OK;
 }
@@ -308,7 +347,8 @@ ESP_Error_t esp8266_waitmsg(void){
 /// @brief Reset esp8266 using RST pin 
 /// @param 
 /// @return ESP_RES_OK
-ESP_Error_t esp8266_hardware_reset(void){
+ESP_Error_t esp8266_hardware_reset(void)
+{
     Delay_ms(500);
     ESP_Set_RST(0);
     Delay_ms(500);
@@ -320,8 +360,11 @@ ESP_Error_t esp8266_hardware_reset(void){
 /// @param timeout extra delay when command execution in ms (not too big or wouldn't set succeed)
 /// @note  remember to reset it to zero after execution
 /// @return 
-ESP_Error_t esp8266_extra_timeout_set(const uint16_t timeout){
-    if (extra_command_timeout >= 65535-ESP8266_RESPONSE_TIMEOUT) return ESP_RES_PARA_INVALID;
+ESP_Error_t esp8266_extra_timeout_set(const uint16_t timeout)
+{
+    if (extra_command_timeout >= 65535-ESP8266_RESPONSE_TIMEOUT) 
+        return ESP_RES_PARA_INVALID;
+
     extra_command_timeout = timeout;
     return ESP_RES_OK;
 }

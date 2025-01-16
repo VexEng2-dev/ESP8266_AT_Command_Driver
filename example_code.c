@@ -106,9 +106,11 @@ ESP_Error_t esp8266_cmd_wifi_set_softAPconfig(){
 
 
 /****** Command Call back function, which would be seprated later ******/
-int main(){
+int main()
+{
 	Delay_ms(1000);  // wait 1s for uart to start 
     OLED_Init();     
+    
     // ESP_Error_t res1 = esp8266_sendcmd("AT\r\n", "OK", NULL);     // esp8266_Init();
     if (esp8266_Init() == ESP_RES_OK){
         OLED_ShowString(1,1, "Init Suc");
@@ -116,8 +118,10 @@ int main(){
     else {
         OLED_ShowString(1,1, "Init Failed");
     }
+
     esp8266_cmd_wifi_set_mode(3);
     esp8266_cmd_tcp_set_cipmux(1);
+    
     if (!esp8266_cmd_tcp_set_tcpServer(1, 8080)){
         OLED_ShowString(1,1,"listen at 8080");
     }

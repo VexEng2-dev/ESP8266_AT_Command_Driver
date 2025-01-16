@@ -150,11 +150,13 @@ static uint8_t _esp_cmd_checkversion_cb(ESP_MSG_LIST list){
 /// @brief callback function for get wifi mode 
 /// @param list 
 /// @return 
-static uint8_t _esp_cmd_wifi_get_mode_cb(ESP_MSG_LIST list){
+static uint8_t _esp_cmd_wifi_get_mode_cb(ESP_MSG_LIST list)
+{
     for (int i = 0; i < list.cmd_buffer_length; i++){
         if (!string_startwith(list.cmd_buffer[i],"+CWMODE:")){
             char *mode_res = NULL;
-            if (string_startmatch(list.cmd_buffer[i],"+CWMODE:", &mode_res, 1)) return 1;
+            if (string_startmatch(list.cmd_buffer[i],"+CWMODE:", &mode_res, 1)) 
+                return 1;
             Esp8266_Wifi_state.mode = atoi(mode_res);
             free(mode_res); mode_res = NULL;
             return 0;
@@ -166,7 +168,8 @@ static uint8_t _esp_cmd_wifi_get_mode_cb(ESP_MSG_LIST list){
 /// @brief call back function for getting the station address 
 /// @param list 
 /// @return 
-static uint8_t _esp_cmd_wifi_get_cipaddress_cb(ESP_MSG_LIST list){
+static uint8_t _esp_cmd_wifi_get_cipaddress_cb(ESP_MSG_LIST list)
+{
     for (int i = 0; i < list.cmd_buffer_length; i++){
         if (!string_startwith(list.cmd_buffer[i], "+CIPSTA:ip:")){
             if (string_startmatch(list.cmd_buffer[i],  "+CIPSTA:ip:", &Esp8266_station_infomation.ip, 20) || \
@@ -184,11 +187,13 @@ static uint8_t _esp_cmd_wifi_get_cipaddress_cb(ESP_MSG_LIST list){
 /// @brief callback funciton for get cipmux mode 
 /// @param list 
 /// @return 
-static uint8_t _esp_cmd_tcp_get_cipmux_cb(ESP_MSG_LIST list){
+static uint8_t _esp_cmd_tcp_get_cipmux_cb(ESP_MSG_LIST list)
+{
     for (int i = 0; i < list.cmd_buffer_length; i++){
         if (!string_startwith(list.cmd_buffer[i],"+CIPMUX:")){
             char *mux_res = NULL;
-            if (string_startmatch(list.cmd_buffer[i],"+CIPMUX:",&mux_res,1)) return 1;
+            if (string_startmatch(list.cmd_buffer[i],"+CIPMUX:",&mux_res,1)) 
+                return 1;
             Esp8266_TCPIP_state.cipmux = atoi(mux_res);
             free(mux_res);
             return 0;
@@ -200,11 +205,13 @@ static uint8_t _esp_cmd_tcp_get_cipmux_cb(ESP_MSG_LIST list){
 /// @brief callback function for CIPSTO command 
 /// @param list 
 /// @return 
-static uint8_t _esp_cmd_tcp_get_ciptimout_cb(ESP_MSG_LIST list){
+static uint8_t _esp_cmd_tcp_get_ciptimout_cb(ESP_MSG_LIST list)
+{
     char *timeout_str = NULL;
     for (int i = 0; i < list.cmd_buffer_length; i++){
         if (!string_startwith(list.cmd_buffer[i],"+CIPSTO:")){
-            if (string_startmatch(list.cmd_buffer[i],"+CIPSTO:", &timeout_str, 4)) return 1;  // maximum 7200
+            if (string_startmatch(list.cmd_buffer[i],"+CIPSTO:", &timeout_str, 4)) 
+                return 1;  // maximum 7200
             Esp8266_TCPIP_state.ciptimeout = atoi(timeout_str);
             if (timeout_str!=NULL){
                 free(timeout_str);
@@ -220,22 +227,28 @@ static uint8_t _esp_cmd_tcp_get_ciptimout_cb(ESP_MSG_LIST list){
 /// @brief Check the information version of 
 /// @param info_struct ESP_VERSION_INFO_t type, receive the infomation result
 /// @return see ESP_Error_t
-ESP_Error_t esp8266_cmd_checkversioninfo(ESP_VERSION_INFO_t *info_struct){
+ESP_Error_t esp8266_cmd_checkversioninfo(ESP_VERSION_INFO_t *info_struct)
+{
     ESP_Error_t result = esp8266_sendcmd("AT+GMR\r\n", "OK", _esp_cmd_checkversion_cb);
-    if (result!=ESP_RES_OK) return result;
+
+    if (result!=ESP_RES_OK) 
+        return result;
+
     if (info_struct!=NULL){
         // pointer redirection
         info_struct->AT_version   = Esp8266_version_infomation.AT_version;
         info_struct->SDK_version  = Esp8266_version_infomation.SDK_version;
         info_struct->Compile_time = Esp8266_version_infomation.Compile_time;
     }
+
     return  result;
 }
 
 /// @brief Set Echo enable or Echo Disable
 /// @param enable 
 /// @return 
-ESP_Error_t esp8266_cmd_set_echoEnable(const uint8_t enable){
+ESP_Error_t esp8266_cmd_set_echoEnable(const uint8_t enable)
+{
     ESP_Error_t result;
     if (!enable){
         result =  esp8266_sendcmd("ATE0\r\n","OK", NULL);
@@ -249,7 +262,8 @@ ESP_Error_t esp8266_cmd_set_echoEnable(const uint8_t enable){
 /// @brief Software Reset Command for esp8266
 /// @param 
 /// @return see ESP_Error_t
-ESP_Error_t esp8266_cmd_software_reset(void){
+ESP_Error_t esp8266_cmd_software_reset(void)
+{
     ESP_Error_t result = esp8266_sendcmd("AT+RST\r\n","OK",NULL);
     return result;
 }
@@ -257,7 +271,8 @@ ESP_Error_t esp8266_cmd_software_reset(void){
 /// @brief Restore Factory Settings 
 /// @param  
 /// @return see ESP_Error_t 
-ESP_Error_t esp8266_cmd_restore_factory_settings(void){
+ESP_Error_t esp8266_cmd_restore_factory_settings(void)
+{
     ESP_Error_t result = esp8266_sendcmd("AT+RESTORE\r\n","OK", NULL);
     Delay_ms(1000);
     return result;
@@ -268,18 +283,25 @@ ESP_Error_t esp8266_cmd_restore_factory_settings(void){
 ///                  2: Light-sleep mode, 3:modem-sleep listen interval mod 
 /// @note  when enter sleep mode, the chip would not always respond to command 
 /// @return 
-ESP_Error_t esp8266_cmd_set_sleepmode(uint8_t sleepmode){
+ESP_Error_t esp8266_cmd_set_sleepmode(uint8_t sleepmode)
+{
     ESP_Error_t result;
-    if (sleepmode > 3) return ESP_RES_PARA_INVALID;
+    if (sleepmode > 3) 
+        return ESP_RES_PARA_INVALID;
+
     char buff[10];
     sprintf(buff, "%d", sleepmode);
 
     char* cmd = NULL;
-    if (string_join_command(&cmd, "AT+SLEEP=", buff, NULL)) return ESP_RES_TxBUFFER_FULL;
+    if (string_join_command(&cmd, "AT+SLEEP=", buff, NULL)) 
+        return ESP_RES_TxBUFFER_FULL;
+
     result = esp8266_sendcmd(cmd, "OK", NULL);
+
     if (cmd!=NULL){
         free(cmd); cmd = NULL;
     }
+
     return result;
 }
 
@@ -290,25 +312,34 @@ ESP_Error_t esp8266_cmd_set_sleepmode(uint8_t sleepmode){
 /// @param mode: 0 : no wifi mode 1 : station mode  2 : SoftAP  mode  3: SoftAP+Station Mode 
 /// @param auto_connect auto_connect mode, default is 1 
 /// @return 
-ESP_Error_t esp8266_cmd_wifi_set_mode(uint8_t mode){
+ESP_Error_t esp8266_cmd_wifi_set_mode(uint8_t mode)
+{
     ESP_Error_t  result;
-    if (mode > 3) return ESP_RES_PARA_INVALID;
+
+    if (mode > 3) 
+        return ESP_RES_PARA_INVALID;
+
     char md[10];
     sprintf(md, "%d",mode);
     
     char* cmd = NULL;
-    if (string_join_command(&cmd, "AT+CWMODE=",md, NULL)) return ESP_RES_TxBUFFER_FULL;
+    if (string_join_command(&cmd, "AT+CWMODE=",md, NULL)) 
+        return ESP_RES_TxBUFFER_FULL;
+
     result = esp8266_sendcmd(cmd,"OK", NULL);
+
     if (cmd!=NULL){
         free(cmd); cmd = NULL;
     }
+
     return result;
 }
 
 /// @brief check the wifi mode of esp8266 device
 /// @param mode 0 : no wifi mode 1 : station mode  2 : SoftAP  mode  3: SoftAP+Station Mode
 /// @return 
-ESP_Error_t esp8266_cmd_wifi_get_mode(uint8_t *mode){
+ESP_Error_t esp8266_cmd_wifi_get_mode(uint8_t *mode)
+{
     ESP_Error_t result = esp8266_sendcmd("AT+CWMODE?\r\n", "OK", _esp_cmd_wifi_get_mode_cb);
     if (result == ESP_RES_OK && mode!=NULL){
         (*mode) = Esp8266_Wifi_state.mode;
@@ -321,7 +352,8 @@ ESP_Error_t esp8266_cmd_wifi_get_mode(uint8_t *mode){
 /// @param ssid     Wifi name 
 /// @param pwd      password 
 /// @return 
-ESP_Error_t esp8266_cmd_wifi_set_joinAP(uint8_t no_param, const char* ssid, const char* pwd){
+ESP_Error_t esp8266_cmd_wifi_set_joinAP(uint8_t no_param, const char* ssid, const char* pwd)
+{
     ESP_Error_t result;
     char* cmd = NULL;
     
@@ -345,7 +377,8 @@ ESP_Error_t esp8266_cmd_wifi_set_joinAP(uint8_t no_param, const char* ssid, cons
 /// @brief quit the connection to the current AP 
 /// @param  
 /// @return 
-ESP_Error_t esp8266_cmd_wifi_quitAP(void){ 
+ESP_Error_t esp8266_cmd_wifi_quitAP(void)
+{ 
     // AT+CWQAP 
     return esp8266_sendcmd("AT+CWQAP\r\n", "OK", NULL);
 }
@@ -353,7 +386,8 @@ ESP_Error_t esp8266_cmd_wifi_quitAP(void){
 /// @brief query the ip address of the ESP station 
 /// @param station_addr  output station address structure
 /// @return 
-ESP_Error_t esp8266_cmd_wifi_get_cipaddress(ESP_STATION_INFO_t *station_addr){
+ESP_Error_t esp8266_cmd_wifi_get_cipaddress(ESP_STATION_INFO_t *station_addr)
+{
     ESP_Error_t result;
     result = esp8266_sendcmd("AT+CIPSTA?\r\n", "OK", _esp_cmd_wifi_get_cipaddress_cb);
     if (result == ESP_RES_OK && station_addr!=NULL){
@@ -371,24 +405,33 @@ ESP_Error_t esp8266_cmd_wifi_get_cipaddress(ESP_STATION_INFO_t *station_addr){
 /// @param ecn encode method  0: OPEN; 1: WPA_PSK;  2: WPA2_PSK; 3:WPA_WPA2_PSK 
 /// @param max_conn if not use max_conn parameter, set it to zero
 /// @return 
-ESP_Error_t esp8266_cmd_wifi_set_softAPconfig(char *ssid, char* pwd, uint16_t chl, uint8_t ecn, uint8_t max_conn){  // AT + CWSAP
+ESP_Error_t esp8266_cmd_wifi_set_softAPconfig(char *ssid, char* pwd, uint16_t chl, uint8_t ecn, uint8_t max_conn)
+{ 
 // +CWSAP:<ssid>,<pwd>,<channel>,<ecn>,<max conn>,<ssid hidden>
     ESP_Error_t result = ESP_RES_OK;
-    if (max_conn > 10 || ecn > 4 || strlen(pwd) < 8 || strlen(pwd) > 64) return ESP_RES_PARA_INVALID;
+    if (max_conn > 10 || ecn > 4 || strlen(pwd) < 8 || strlen(pwd) > 64) 
+        return ESP_RES_PARA_INVALID;
     
     char buf1[10], buf2[10], buf3[10];
-    sprintf(buf1, "%d", chl); sprintf(buf2,"%d",ecn); sprintf(buf3,"%d", max_conn);
+    sprintf(buf1, "%d", chl); 
+    sprintf(buf2,"%d",ecn); 
+    sprintf(buf3,"%d", max_conn);
     
     char* cmd = NULL;
     if (max_conn == 0){
-        if (string_join_command(&cmd, "AT+CWSAP=", ssid, pwd, buf1, buf2, NULL)) return ESP_RES_TxBUFFER_FULL;
+        if (string_join_command(&cmd, "AT+CWSAP=", ssid, pwd, buf1, buf2, NULL)) 
+            return ESP_RES_TxBUFFER_FULL;
     }else{
-        if (string_join_command(&cmd, "AT+CWSAP=", ssid, pwd, buf1, buf2, buf3, NULL)) return ESP_RES_TxBUFFER_FULL;
+        if (string_join_command(&cmd, "AT+CWSAP=", ssid, pwd, buf1, buf2, buf3, NULL)) 
+            return ESP_RES_TxBUFFER_FULL;
     }
+
     result = esp8266_sendcmd(cmd,"OK", NULL);
+
     if (cmd != NULL){
         free(cmd);  cmd = NULL;
     }
+
     return result;
 }
 
@@ -398,29 +441,38 @@ ESP_Error_t esp8266_cmd_wifi_set_softAPconfig(char *ssid, char* pwd, uint16_t ch
 /// @param mux_mode 0: single connection; 1: multiple connection 
 /// @note  MUX can be 1 only when CIPMODE = 0 
 /// @return 
-ESP_Error_t esp8266_cmd_tcp_set_cipmux(uint8_t mux_mode){
+ESP_Error_t esp8266_cmd_tcp_set_cipmux(uint8_t mux_mode)
+{
     ESP_Error_t result;
-    if (mux_mode > 1) return ESP_RES_PARA_INVALID;
+    if (mux_mode > 1) 
+        return ESP_RES_PARA_INVALID;
 
     char mm[10];  sprintf(mm, "%d",mux_mode);
     char* cmd = NULL;
-    if (string_join_command(&cmd, "AT+CIPMUX=", mm, NULL)) return ESP_RES_TxBUFFER_FULL;
+
+    if (string_join_command(&cmd, "AT+CIPMUX=", mm, NULL)) 
+        return ESP_RES_TxBUFFER_FULL;
     
     result = esp8266_sendcmd(cmd, "OK", NULL);
+
     if (cmd!=NULL){
         free(cmd); cmd = NULL;
     }
+
     return result;
 }
 
 /// @brief get the  cip multiple connection mode state
 /// @param mux_mode  mux_mode 0: single connection; 1: multiple connection 
 /// @return 
-ESP_Error_t  esp8266_cmd_tcp_get_cipmux(uint8_t *mux_mode){
+ESP_Error_t  esp8266_cmd_tcp_get_cipmux(uint8_t *mux_mode)
+{
     ESP_Error_t result = esp8266_sendcmd("AT+CIPMUX?\r\n","OK", _esp_cmd_tcp_get_cipmux_cb);
+
     if (result == ESP_RES_OK && mux_mode!=NULL){
         (*mux_mode) = Esp8266_TCPIP_state.cipmux;
     }
+
     return result;
 }
 
@@ -430,10 +482,12 @@ ESP_Error_t  esp8266_cmd_tcp_get_cipmux(uint8_t *mux_mode){
 ///        when mode is 0, 0: shutdown the server and keep existing connections.
 ///                        1: shutdown the server and close all connections.
 /// @return 
-ESP_Error_t esp8266_cmd_tcp_set_tcpServer(uint8_t mode,  uint16_t port){
+ESP_Error_t esp8266_cmd_tcp_set_tcpServer(uint8_t mode,  uint16_t port)
+{
     // AT+CIPSERVER=1,8080
     ESP_Error_t result;
-    if (mode > 1 ) return ESP_RES_PARA_INVALID;
+    if (mode > 1 ) 
+        return ESP_RES_PARA_INVALID;
     
     char buf1[10], buf2[10];
     sprintf(buf1, "%d" ,mode); sprintf(buf2, "%d", port);
@@ -441,10 +495,13 @@ ESP_Error_t esp8266_cmd_tcp_set_tcpServer(uint8_t mode,  uint16_t port){
     char* cmd = NULL;
     if (string_join_command(&cmd, "AT+CIPSERVER=", buf1, buf2, NULL))
         return ESP_RES_TxBUFFER_FULL;
+
     result = esp8266_sendcmd(cmd, "OK", NULL);
+
     if(cmd!=NULL) {
         free(cmd); cmd = NULL;
     }
+
     return result;
 }
 
@@ -457,9 +514,11 @@ ESP_Error_t esp8266_cmd_tcp_set_tcpServer(uint8_t mode,  uint16_t port){
 /// @note ; if enter wifi-passthrough mode, set length as 0;
 /// @bug (not finished!): single connection mode and passthrough mode haven't been tested!
 /// @return 
-ESP_Error_t esp8266_cmd_tcp_cipsend(const char* link_id, uint16_t length,const char* remote_host,const char* remote_port,const char* msg){
+ESP_Error_t esp8266_cmd_tcp_cipsend(const char* link_id, uint16_t length,const char* remote_host,const char* remote_port,const char* msg)
+{
     ESP_Error_t result;
-    if (length > ESP8266_TX_BUFFER_SIZE) return ESP_RES_PARA_INVALID;
+    if (length > ESP8266_TX_BUFFER_SIZE) 
+        return ESP_RES_PARA_INVALID;
     
     char *cmd = NULL;
     if (link_id == NULL){ // in single connection mode, 
@@ -477,25 +536,33 @@ ESP_Error_t esp8266_cmd_tcp_cipsend(const char* link_id, uint16_t length,const c
         char buf1[10]; sprintf(buf1, "%d", length);
         if (string_join_command(&cmd,"AT+CIPSEND=",link_id,buf1,remote_host,remote_port,NULL))
             return ESP_RES_TxBUFFER_FULL;
+        
         result = esp8266_sendcmd(cmd,"OK",NULL);
     }
+
     if (cmd!=NULL){
         free(cmd); cmd = NULL;
     }
-    if (result!=ESP_RES_OK) return result;
+
+    if (result!=ESP_RES_OK) 
+        return result;
+
     if (msg!=NULL){
         result = esp8266_sendcmd(msg, "SEND OK", NULL);
     }
+
     return ESP_RES_OK;
 }
 
 /// @brief TCP_IP timeout query
 /// @param timeout_res pointer to the result (if not needed use NULL)
 /// @return 
-ESP_Error_t esp8266_cmd_tcp_get_ciptimout(uint16_t* timeout_res){
+ESP_Error_t esp8266_cmd_tcp_get_ciptimout(uint16_t* timeout_res)
+{
     ESP_Error_t result = esp8266_sendcmd("AT+CIPSTO?\r\n","OK", _esp_cmd_tcp_get_ciptimout_cb);
     if (result == ESP_RES_OK){
-        if (timeout_res!=NULL) (*timeout_res) = Esp8266_TCPIP_state.ciptimeout;
+        if (timeout_res!=NULL) 
+            (*timeout_res) = Esp8266_TCPIP_state.ciptimeout;
     }
     return result;
 }
